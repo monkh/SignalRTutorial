@@ -1,0 +1,57 @@
+﻿@page
+@model ChatModel
+@{
+}
+
+<h1>Chat</h1>
+
+<form action="#" id="send-form">
+    Send a message:
+    <input type="text" id="message-textbox" disabled />
+    <button id="send-button" type="submit" disabled>Send</button>
+</form>
+
+<ul id="messages-list">
+</ul>
+
+@section Scripts {
+    <script type="text/javascript" src="/lib/signalr/signalr.js"></script>
+    @*<script type="text/javascript" src="/js/site.js"></script>*@
+    <script type="text/javascript">
+        // Write your Javascript code.
+        var sendFrom = document.getElementById("send-form");
+        var sendButton = document.getElementById("send-button");
+        var messagesList = document.getElementById("messages-list");
+        var messageTextBox = document.getElementById("message-textbox");
+
+        var logger = new signalR.ConsoleLogger(signalR.LogLevel.Information);
+
+        function appendMessage(content) {
+            var li = document.createElement("li");
+            li.innerText = content;
+            messagesList.appendChild(li);
+        }
+
+        var connection = new signalR.HubConnection("/hubs/chat", logger);
+
+        sendFrom.addEventListener("submit", function (evt) {
+            var message = messageTextBox.value;
+            messageTextBox.value = "";
+            connection.send("Send", message);
+            evt.preventDefault();
+        });
+
+        connection.on("SendMessage", function (sender, message) {
+            appendMessage(`${sender}: ${message}`)
+        });
+
+        connection.on("SendAction", function (sender, action) {
+            appendMessage(`${sender} ${action}`);
+        });
+
+        connection.start().then(function (params) {
+            messageTextBox.disabled = false;
+            sendButton.disabled = false;
+        });
+    </script>
+}
